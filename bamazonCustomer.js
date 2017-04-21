@@ -3,24 +3,6 @@ var inquire = require('inquirer');
 var prompt = require('prompt');
 var cliTable = require('cli-table');
 
-function parseSQL(array,fields=[]) {
-    // traverse array of objects
-    array.forEach(function(element){
-        var outputGroup = '';
-        // traverse object
-        for (x in element) {
-            // check if object property matches a desired field for output
-            if (fields.indexOf(x) != -1) {
-                // add value of the property to the outputGroup string
-                outputGroup += x+': '+element[x] + '   ';
-            }
-        }
-        // log the string of property: values
-        console.log(outputGroup.trim());
-        console.log(' ');
-    });
-}
-
 var bamDB = mysql.createConnection({
     host: 'localhost',
     port: 3306,
@@ -33,11 +15,8 @@ var bamDB = mysql.createConnection({
     database: 'Bamazon'
 });
 
-
 var bamazonApp = {
-
     transaction : [],
-
     userPrompt : function() {
         inquire.prompt([
             {
@@ -53,7 +32,6 @@ var bamazonApp = {
             bamazonApp.queryDB(answer);   
         });
     },    
-
     logDB : function(){
         var productList = new cliTable({
             head: ['ID','Product','Department','Price','In Stock'],
@@ -75,14 +53,16 @@ var bamazonApp = {
             }
         });
     },
-
     queryDB : function(userChoices){
         bamDB.query('SELECT * FROM products WHERE ?',{item_id : userChoices.productID},function(err,res){
             if (err){
                 console.log('That is not a valid product.');
                 bamazonApp.engine();
             } else {
-                if (res[0].stock_quantity < userChoices.quantity) {
+                if (res[0] === undefined) {
+                    console.log('That is not a valid product.');
+                    bamazonApp.engine();
+                } else if (res[0].stock_quantity < userChoices.quantity) {
                     console.log('Sorry, insufficient '+res[0].product_name+' in stock.');
                     bamazonApp.engine();
                 } else {
@@ -99,9 +79,7 @@ var bamazonApp = {
                 }
             }
         });
-        
     },
-
     engine : function() {
         this.logDB();
     }
